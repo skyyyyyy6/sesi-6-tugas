@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/product.dart';
 
 class CartProvider with ChangeNotifier {
@@ -8,50 +7,44 @@ class CartProvider with ChangeNotifier {
 
   List<Product> get cartItems => _cartItems;
 
-  CartProvider() {
-    _loadCartFromPrefs();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  CartProvider();
+
+  /// Load cart items from Firestore for current user
+  Future<void> loadCartFromFirestore(String uid) async {
+    final doc = await _firestore.collection('carts').doc(uid).get();
+    if (doc.exists) {
+      final data = doc.data();
+      final List<dynamic> items = data?['items'] ?? [];
+      _cartItems = items.map((item) => Product.fromMap(Map<String, dynamic>.from(item))).toList();
+    } else {
+      _cartItems = [];
+    }
+    notifyListeners();
   }
 
-  void addToCart(Product product) {
+  /// Save current cart items to Firestore under user UID
+  Future<void> saveCartToFirestore(String uid) async {
+    final itemsList = _cartItems.map((item) => item.toMap()).toList();
+    await _firestore.collection('carts').doc(uid).set({'items': itemsList});
+  }
+
+  Future<void> addToCart(Product product, String uid) async {
     _cartItems.add(product);
-    _saveCartToPrefs();
     notifyListeners();
+    await saveCartToFirestore(uid);
   }
 
-  void addItem(String id, String title, double price) {
-  final product = Product(id: id, title: title, price: price);
-  _cartItems.add(product);
-  _saveCartToPrefs();
-  notifyListeners();
-}
-
-  void removeFromCart(Product product) {
+  Future<void> removeFromCart(Product product, String uid) async {
     _cartItems.removeWhere((item) => item.id == product.id);
-    _saveCartToPrefs();
     notifyListeners();
+    await saveCartToFirestore(uid);
   }
 
-  void clearCart() {
+  Future<void> clearCart(String uid) async {
     _cartItems.clear();
-    _saveCartToPrefs();
     notifyListeners();
-  }
-
-  Future<void> _saveCartToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cartJson = _cartItems.map((item) => jsonEncode(item.toMap())).toList();
-    prefs.setStringList('cart_items', cartJson);
-
-    print('${_cartItems.length} items saved to cart');
-    print('Cart items: $cartJson');
-    
-  }
-
-  Future<void> _loadCartFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cartJson = prefs.getStringList('cart_items') ?? [];
-    _cartItems = cartJson.map((item) => Product.fromMap(jsonDecode(item))).toList();
-    notifyListeners();
-    print('${_cartItems.length} items loaded from cart');
+    await _firestore.collection('carts').doc(uid).delete();
   }
 }

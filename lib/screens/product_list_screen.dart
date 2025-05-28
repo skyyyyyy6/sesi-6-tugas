@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/product_item.dart';
 import '../providers/product_provider.dart';
+import '../providers/cart_provider.dart'; 
 
 class ProductListScreen extends StatelessWidget {
   const ProductListScreen({super.key});
@@ -9,6 +11,7 @@ class ProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product List'),
@@ -17,6 +20,12 @@ class ProductListScreen extends StatelessWidget {
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
               Navigator.pushNamed(context, '/cart');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
             },
           ),
         ],
