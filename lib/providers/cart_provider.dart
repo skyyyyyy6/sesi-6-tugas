@@ -11,7 +11,6 @@ class CartProvider with ChangeNotifier {
 
   CartProvider();
 
-  /// Load cart items from Firestore for current user
   Future<void> loadCartFromFirestore(String uid) async {
     final doc = await _firestore.collection('carts').doc(uid).get();
     if (doc.exists) {
@@ -24,7 +23,6 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Save current cart items to Firestore under user UID
   Future<void> saveCartToFirestore(String uid) async {
     final itemsList = _cartItems.map((item) => item.toMap()).toList();
     await _firestore.collection('carts').doc(uid).set({'items': itemsList});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';  // <-- Add this
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import './providers/cart_provider.dart';
 import './providers/product_provider.dart';
@@ -37,19 +37,18 @@ class MyApp extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasData) {
-            // User logged in
+            // logged in
             final uid = snapshot.data!.uid;
             final cartProvider = Provider.of<CartProvider>(context, listen: false);
             cartProvider.loadCartFromFirestore(uid);
-            return const ProductListScreen();  // <-- Show main shopping UI here
+            return const ProductListScreen();
           }
-          // User NOT logged in
+          // not logged in
           return const AuthScreen();
         },
       ),
       routes: {
         '/cart': (context) => const CartScreen(),
-        // add other routes here if needed
       },
     );
   }
